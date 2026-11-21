@@ -4,6 +4,8 @@ namespace WordFinder.Tests;
 
 public class WordFinderTests
 {
+    private static readonly string[] Sample = ["abcdc", "fgwio", "chill", "pqnsd", "uvdxy"];
+
     [Fact]
     public void ConstructorRejectsNullMatrix()
     {
@@ -114,5 +116,66 @@ public class WordFinderTests
 
         Assert.NotNull(result);
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public void FindReturnsTheSampleWordsThatArePresent()
+    {
+        Finder finder = new(Sample);
+        IEnumerable<string> result = finder.Find(["cold", "wind", "snow", "chill"]);
+
+        AssertSameWords(result, "chill", "cold", "wind");
+    }
+
+    [Fact]
+    public void FindDoesNotReturnAReverseWord()
+    {
+        Finder finder = new(["cold"]);
+        IEnumerable<string> result = finder.Find(["dloc", "cold"]);
+
+        AssertSameWords(result, "cold");
+    }
+
+    [Fact]
+    public void FindDoesNotReturnABottomToTopWord()
+    {
+        Finder finder = new(["d", "l", "o", "c"]);
+        IEnumerable<string> result = finder.Find(["cold", "dloc"]);
+
+        AssertSameWords(result, "dloc");
+    }
+
+    [Fact]
+    public void FindDoesNotReturnADiagonalWord()
+    {
+        Finder finder = new(["ab", "de"]);
+        IEnumerable<string> result = finder.Find(["ae", "ab"]);
+
+        AssertSameWords(result, "ab");
+    }
+
+    [Fact]
+    public void FindIsCaseSensitive()
+    {
+        Finder finder = new(Sample);
+        IEnumerable<string> result = finder.Find(["Chill", "chill"]);
+
+        AssertSameWords(result, "chill");
+    }
+
+    [Fact]
+    public void FindReturnsHorizontalAndVerticalWords()
+    {
+        Finder finder = new(["ab", "ac"]);
+        IEnumerable<string> result = finder.Find(["ab", "ac"]);
+
+        AssertSameWords(result, "ab", "ac");
+    }
+
+    private static void AssertSameWords(IEnumerable<string> actual, params string[] expected)
+    {
+        string[] actualSorted = actual.OrderBy(word => word, StringComparer.Ordinal).ToArray();
+        string[] expectedSorted = expected.OrderBy(word => word, StringComparer.Ordinal).ToArray();
+        Assert.Equal(expectedSorted, actualSorted);
     }
 }
