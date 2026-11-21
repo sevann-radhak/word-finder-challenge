@@ -4,6 +4,7 @@ public class WordFinder
 {
     private const int MaxSide = 64;
     private readonly Dictionary<string, int> _counts;
+    private readonly int _maxWordLength;
 
     public WordFinder(IEnumerable<string> matrix)
     {
@@ -44,14 +45,18 @@ public class WordFinder
             rows.Add(row);
         }
 
+        _maxWordLength = rows.Count == 0 || rows[0].Length == 0
+            ? 0
+            : Math.Max(rows.Count, rows[0].Length);
+
         _counts = Index(rows);
     }
 
     public IEnumerable<string> Find(IEnumerable<string> wordstream)
     {
         ArgumentNullException.ThrowIfNull(wordstream);
-
         Dictionary<string, int> hits = new(StringComparer.Ordinal);
+
         foreach (string word in wordstream)
         {
             if (word is null)
@@ -59,7 +64,7 @@ public class WordFinder
                 throw new ArgumentException("A word in the stream is null.", nameof(wordstream));
             }
 
-            if (word.Length == 0 || hits.ContainsKey(word))
+            if (word.Length == 0 || word.Length > _maxWordLength || hits.ContainsKey(word))
             {
                 continue;
             }
@@ -86,43 +91,43 @@ public class WordFinder
             return counts;
         }
 
-        int height = rows.Count;
-        int width = rows[0].Length;
-
-        for (int row = 0; row < height; row++)
+        foreach (string row in rows)
         {
-            for (int column = 0; column < width; column++)
-            {
-                for (int length = 1; length <= width - column; length++)
-                {
-                    Add(counts, rows[row].Substring(column, length));
-                }
-            }
+            AddSlices(counts, row);
         }
 
+        int width = rows[0].Length;
         for (int column = 0; column < width; column++)
         {
-            for (int row = 0; row < height; row++)
-            {
-                for (int length = 1; length <= height - row; length++)
-                {
-                    Add(counts, ReadVertical(rows, row, column, length));
-                }
-            }
+            AddSlices(counts, Column(rows, column));
         }
 
         return counts;
     }
 
-    private static string ReadVertical(List<string> rows, int startRow, int column, int length)
+    private static string Column(List<string> rows, int column)
     {
-        char[] buffer = new char[length];
-        for (int i = 0; i < length; i++)
+        return string.Create(rows.Count, (rows, column), static (span, state) =>
         {
-            buffer[i] = rows[startRow + i][column];
-        }
+            List<string> source = state.rows;
+            int sourceColumn = state.column;
 
-        return new string(buffer);
+            for (int row = 0; row < span.Length; row++)
+            {
+                span[row] = source[row][sourceColumn];
+            }
+        });
+    }
+
+    private static void AddSlices(Dictionary<string, int> counts, string line)
+    {
+        for (int start = 0; start < line.Length; start++)
+        {
+            for (int length = 1; length <= line.Length - start; length++)
+            {
+                Add(counts, line.Substring(start, length));
+            }
+        }
     }
 
     private static void Add(Dictionary<string, int> counts, string slice)

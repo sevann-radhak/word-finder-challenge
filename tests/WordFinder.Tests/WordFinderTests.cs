@@ -289,6 +289,27 @@ public class WordFinderTests
         }
     }
 
+    [Fact]
+    public void FindReturnsTheSameSequenceOnASecondCall()
+    {
+        Finder finder = new(Sample);
+        string[] first = finder.Find(["cold", "wind", "snow", "chill"]).ToArray();
+        string[] second = finder.Find(["snow", "chill", "wind", "cold"]).ToArray();
+
+        Assert.Equal(first, second);
+        AssertSequence(first, "chill", "cold", "wind");
+    }
+
+    [Fact]
+    public void FindOmitsAWordLongerThanTheMatrix()
+    {
+        Finder finder = new(Sample);
+        IEnumerable<string> result = finder.Find(["chills"]);
+
+        Assert.NotNull(result);
+        Assert.Empty(result);
+    }
+
     private static void AssertSequence(IEnumerable<string> actual, params string[] expected)
     {
         Assert.Equal(expected, actual.ToArray());
