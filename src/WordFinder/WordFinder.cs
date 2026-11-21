@@ -3,7 +3,7 @@ namespace WordFinder;
 public class WordFinder
 {
     private const int MaxSide = 64;
-    private readonly Dictionary<string, int> _counts;
+    private readonly HashSet<string> _words;
     private readonly int _maxWordLength;
 
     public WordFinder(IEnumerable<string> matrix)
@@ -33,11 +33,8 @@ public class WordFinder
                 throw new ArgumentException("Matrix side cannot exceed 64.", nameof(matrix));
             }
 
-            if (width is null)
-            {
-                width = row.Length;
-            }
-            else if (row.Length != width)
+            width ??= row.Length;
+            if (row.Length != width)
             {
                 throw new ArgumentException("Matrix rows must have the same length.", nameof(matrix));
             }
@@ -49,7 +46,7 @@ public class WordFinder
             ? 0
             : Math.Max(rows.Count, rows[0].Length);
 
-        _counts = Index(rows);
+        _words = Index(rows);
     }
 
     public IEnumerable<string> Find(IEnumerable<string> wordstream)
@@ -64,15 +61,13 @@ public class WordFinder
                 throw new ArgumentException("A word in the stream is null.", nameof(wordstream));
             }
 
-            if (word.Length == 0 || word.Length > _maxWordLength || hits.ContainsKey(word))
+            if (word.Length == 0 || word.Length > _maxWordLength || !_words.Contains(word))
             {
                 continue;
             }
 
-            if (_counts.TryGetValue(word, out int count) && count > 0)
-            {
-                hits.Add(word, count);
-            }
+            _ = hits.TryGetValue(word, out int count);
+            hits[word] = count + 1;
         }
 
         return hits
@@ -83,26 +78,26 @@ public class WordFinder
             .ToArray();
     }
 
-    private static Dictionary<string, int> Index(List<string> rows)
+    private static HashSet<string> Index(List<string> rows)
     {
-        Dictionary<string, int> counts = new(StringComparer.Ordinal);
+        HashSet<string> words = new(StringComparer.Ordinal);
         if (rows.Count == 0 || rows[0].Length == 0)
         {
-            return counts;
+            return words;
         }
 
         foreach (string row in rows)
         {
-            AddSlices(counts, row);
+            AddSlices(words, row);
         }
 
         int width = rows[0].Length;
         for (int column = 0; column < width; column++)
         {
-            AddSlices(counts, Column(rows, column));
+            AddSlices(words, Column(rows, column));
         }
 
-        return counts;
+        return words;
     }
 
     private static string Column(List<string> rows, int column)
@@ -119,20 +114,14 @@ public class WordFinder
         });
     }
 
-    private static void AddSlices(Dictionary<string, int> counts, string line)
+    private static void AddSlices(HashSet<string> words, string line)
     {
         for (int start = 0; start < line.Length; start++)
         {
             for (int length = 1; length <= line.Length - start; length++)
             {
-                Add(counts, line.Substring(start, length));
+                _ = words.Add(line.Substring(start, length));
             }
         }
-    }
-
-    private static void Add(Dictionary<string, int> counts, string slice)
-    {
-        _ = counts.TryGetValue(slice, out int count);
-        counts[slice] = count + 1;
     }
 }

@@ -182,12 +182,12 @@ public class WordFinderTests
     }
 
     [Fact]
-    public void FindRanksByMatrixCount()
+    public void FindRanksByStreamCount()
     {
-        Finder finder = new(["aaa"]);
-        IEnumerable<string> result = finder.Find(["aaa", "aa", "a"]);
+        Finder finder = new(["ab"]);
+        IEnumerable<string> result = finder.Find(["b", "b", "b", "a"]);
 
-        AssertSequence(result, "a", "aa", "aaa");
+        AssertSequence(result, "b", "a");
     }
 
     [Fact]
@@ -227,6 +227,28 @@ public class WordFinderTests
     }
 
     [Fact]
+    public void FindDropsTheEleventhByStreamCount()
+    {
+        Finder finder = new(["abcdefghijk"]);
+        IEnumerable<string> result = finder.Find(
+        [
+            "k", "k",
+            "b", "b",
+            "c", "c",
+            "d", "d",
+            "e", "e",
+            "f", "f",
+            "g", "g",
+            "h", "h",
+            "i", "i",
+            "j", "j",
+            "a",
+        ]);
+
+        AssertSequence(result, "b", "c", "d", "e", "f", "g", "h", "i", "j", "k");
+    }
+
+    [Fact]
     public void FindUsesOrdinalToBreakTheTenthPlace()
     {
         Finder finder = new(["acacacadadadaeaeaeafafafagagagahahahaiaiaiajajajakakakbm"]);
@@ -241,7 +263,7 @@ public class WordFinderTests
         Finder finder = new(["cold", "oxxx", "lxxx", "dxxy"]);
         IEnumerable<string> result = finder.Find(["oxxx", "oxxx", "oxxx", "cold"]);
 
-        AssertSequence(result, "cold", "oxxx");
+        AssertSequence(result, "oxxx", "cold");
     }
 
     [Fact]
@@ -277,12 +299,7 @@ public class WordFinderTests
 
         IEnumerable<string> ReadOnce()
         {
-            if (read)
-            {
-                throw new InvalidOperationException("The stream was read twice.");
-            }
-
-            yield return "cold";
+            yield return read ? throw new InvalidOperationException("The stream was read twice.") : "cold";
             yield return "wind";
             yield return "snow";
             yield return "chill";
