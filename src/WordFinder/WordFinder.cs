@@ -70,7 +70,12 @@ public class WordFinder
             }
         }
 
-        return hits.Keys.ToArray();
+        return hits
+            .OrderByDescending(pair => pair.Value)
+            .ThenBy(pair => pair.Key, StringComparer.Ordinal)
+            .Take(10)
+            .Select(pair => pair.Key)
+            .ToArray();
     }
 
     private static Dictionary<string, int> Index(List<string> rows)
