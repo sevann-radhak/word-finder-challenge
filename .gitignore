@@ -1,0 +1,13 @@
+# Build and IDE output
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+TestResults/
+
+# Local spec and editor rules.
+# The README is the artifact a colleague receives.
+docs/
+.cursor/
